@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain, shell, nativeImage } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import serve from 'electron-serve';
 import path from 'path';
+import { spawn as ptySpawn } from 'node-pty';
+import os from 'os';
 
 const isProd = app.isPackaged;
 const loadURL = serve({
@@ -29,6 +31,9 @@ const setupDock = () => {
 
 let mainWindow: BrowserWindow | null;
 let isQuitting = false;
+
+// PTY sessions 管理
+const ptySessions = new Map<string, any>();
 
 const createMainWindow = async (): Promise<BrowserWindow> => {
   const window = new BrowserWindow({
@@ -299,11 +304,11 @@ app.on('activate', async () => {
       if (mainWindow.isMinimized()) {
         mainWindow.restore();
       }
-      
+
       if (!mainWindow.isVisible()) {
         mainWindow.show();
       }
-      
+
       mainWindow.focus();
       mainWindow.moveTop();
     } else {
@@ -314,5 +319,71 @@ app.on('activate', async () => {
       mainWindow = await createMainWindow();
     } catch (createError) {
     }
+  }
+});
+
+// 創建本地終端 session
+ipcMain.on('terminal-create', (event, { sessionId }) => {
+  // 如果 session 已存在，先關閉它
+  if (ptySessions.has(sessionId)) {
+    const pty = ptySessions.get(sessionId);
+    pty.kill();
+    ptySessions.delete(sessionId);
+  }
+
+  // 根據平台選擇 shell
+  const shell = os.platform() === 'win32' ? 'powershell.exe' : process.env.SHELL || '/bin/bash';
+
+  // 創建 PTY 進程
+  const ptyProcess = ptySpawn(shell, [], {
+    name: 'xterm-256color',
+    cols: 80,
+    rows: 24,
+    cwd: process.env.HOME || process.cwd(),
+    env: process.env as any,
+  });
+
+  ptySessions.set(sessionId, ptyProcess);
+
+  // 監聽 PTY 輸出
+  ptyProcess.onData((data) => {
+    event.sender.send('terminal-output', {
+      sessionId,
+      data,
+    });
+  });
+
+  // 監聽 PTY 退出
+  ptyProcess.onExit(({ exitCode }) => {
+    ptySessions.delete(sessionId);
+    event.sender.send('terminal-exit', {
+      sessionId,
+      exitCode,
+    });
+  });
+});
+
+// 處理終端輸入
+ipcMain.on('terminal-input', (_event, { sessionId, data }) => {
+  const pty = ptySessions.get(sessionId);
+  if (pty) {
+    pty.write(data);
+  }
+});
+
+// 處理終端大小調整
+ipcMain.on('terminal-resize', (_event, { sessionId, cols, rows }) => {
+  const pty = ptySessions.get(sessionId);
+  if (pty) {
+    pty.resize(cols, rows);
+  }
+});
+
+// 關閉終端 session
+ipcMain.on('terminal-destroy', (_event, { sessionId }) => {
+  const pty = ptySessions.get(sessionId);
+  if (pty) {
+    pty.kill();
+    ptySessions.delete(sessionId);
   }
 });

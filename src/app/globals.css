@@ -256,3 +256,77 @@ progress[value]::-moz-progress-bar {
     transform: rotate(270deg);
   }
 }
+
+/* Terminal Styles - Dark Mode macOS inspired */
+.terminal-container {
+  background: linear-gradient(to bottom, #0d1117 0%, #0a0e13 100%);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.terminal {
+  padding: 12px;
+  height: 100%;
+}
+
+.xterm {
+  height: 100%;
+  padding: 8px;
+}
+
+.xterm .xterm-viewport {
+  background-color: transparent !important;
+}
+
+.xterm .xterm-screen {
+  background-color: transparent !important;
+}
+
+/* Override xterm cursor for macOS style */
+.xterm .xterm-cursor-layer .xterm-cursor {
+  background-color: #60a5fa !important;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+/* Selection color */
+.xterm .xterm-selection div {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+  backdrop-filter: blur(2px);
+}
+
+/* Scrollbar for terminal */
+.xterm .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+  background-clip: padding-box;
+}
+
+/* Hide scrollbar for tabs */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

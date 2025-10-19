@@ -11,6 +11,14 @@ export interface DownloadProgress {
   total: number;
 }
 
+export interface SSHConfig {
+  host: string;
+  port: number;
+  username: string;
+  password?: string;
+  privateKey?: string;
+}
+
 export interface ElectronAPI {
   checkForUpdates: () => Promise<{ success: boolean; updateInfo?: UpdateInfo; error?: string }>;
   downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
@@ -36,11 +44,17 @@ export interface ElectronAPI {
   quitApp: () => Promise<{ success: boolean; message?: string }>;
   showWindow: () => Promise<{ success: boolean; message?: string; error?: string }>;
   forceQuit: () => Promise<{ success: boolean; error?: string }>;
+
+  // SSH and Terminal methods
+  send: (channel: string, data: any) => void;
+  on: (channel: string, callback: (event: any, data: any) => void) => void;
+  removeListener: (channel: string, callback: (event: any, data: any) => void) => void;
 }
 
 declare global {
   interface Window {
     electronAPI?: ElectronAPI;
+    electron?: ElectronAPI;
   }
 }
 
