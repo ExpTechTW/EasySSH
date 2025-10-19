@@ -108,9 +108,11 @@ export default function Terminal({ sessionId = 'default' }: TerminalProps) {
 
         // 清理函數
         return () => {
-          window.electron.removeListener('terminal-output', handleOutput);
-          window.electron.removeListener('terminal-exit', handleExit);
-          window.electron.send('terminal-destroy', { sessionId });
+          if (window.electron) {
+            window.electron.removeListener('terminal-output', handleOutput);
+            window.electron.removeListener('terminal-exit', handleExit);
+            window.electron.send('terminal-destroy', { sessionId });
+          }
         };
       } else {
         // 如果不在 Electron 環境，顯示提示
